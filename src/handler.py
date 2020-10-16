@@ -126,9 +126,9 @@ def _get_date(my_datetime):
 def generate_cloudcheckr_reports(event, context):
     access_key = os.environ["ACCESS_KEY"]
     url_base = "https://api.cloudcheckr.com/api/billing.json/get_detailed_billing_with_grouping_v2"
-    start = _get_date(datetime.datetime.now())
+    end = _get_date(datetime.datetime.now())
     month_ago = datetime.datetime.now() - datetime.timedelta(30)
-    end = _get_date(month_ago)
+    start = _get_date(month_ago)
 
     url = f"{url_base}?access_key={access_key}&start={start}&end={end}&saved_filter_name=IOWFilterRDS"
     logger.info(url)
