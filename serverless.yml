@@ -59,6 +59,8 @@ custom:
     subnetIds: ${ssm:/iow/aws/vpc/${self:provider.stage}/subnetIds~split}
   observationsDb:
     connectInfo: ${ssm:/aws/reference/secretsmanager/WQP-EXTERNAL-${self:provider.stage}~true}
+  cloudcheckr:
+    accessInfo: ${ssm:/aws/reference/secretsmanager/IOW-CLOUDCHECKR~true}
 
 functions:
   StartObservationsDb:
@@ -116,6 +118,22 @@ functions:
           enabled: ${self:custom.stopScheduleEnabled.${self:provider.stage}}
     vpc: ${self:custom.vpc}
 
+
+  GenerateCloudcheckrReports:
+    handler: src.handler.generate_cloudcheckr_reports
+    role: arn:aws:iam::${self:custom.accountNumber}:role/csr-Lambda-Role
+    environment:
+      ACCESS_KEY: ${self:custom.cloudcheckr.accessInfo.ACCESS_KEY}
+      AWS_DEPLOYMENT_REGION: ${self:provider.region}
+      STAGE: ${self:provider.stage}
+      LOG_LEVEL: INFO
+      MAX_RETRIES: 6
+    events:
+      - schedule:
+          rate: rate(1 hour)
+    vpc: ${self:custom.vpc}
+
+
   ControlDbUtilization:
     handler: src.handler.control_db_utilization
     role: arn:aws:iam::${self:custom.accountNumber}:role/csr-Lambda-Role
@@ -135,6 +153,15 @@ functions:
 
 resources:
   Resources:
+    IOWCloudcheckrBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: iow-cloudcheckr
+        AccessControl: Private
+        LifecycleConfiguration:
+          Rules:
+            - ExpirationInDays: 30
+              Status: Enabled
     snsTopic:
       Type: AWS::SNS::Topic
       Properties:

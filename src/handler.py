@@ -1,5 +1,6 @@
 import datetime
 import os
+from urllib.request import urlopen
 
 import boto3
 from src.rds import RDS
@@ -109,6 +110,30 @@ def start_observations_db(event, context):
         'statusCode': 200,
         'message': f"Started the {stage} observations db."
     }
+
+
+def _get_date(my_datetime):
+    month = str(my_datetime.month)
+    if len(month) == 1:
+        month = f"0{month}"
+    day = str(my_datetime.day)
+    if len(day) == 1:
+        day = f"0{day}"
+    year = str(my_datetime.year)
+    return f"{year}-{month}-{day}"
+
+
+def generate_cloudcheckr_reports(event, context):
+    access_key = os.environ["ACCESS_KEY"]
+    url_base = "https://api.cloudcheckr.com/api/billing.json/get_detailed_billing_with_grouping_v2"
+    start = _get_date(datetime.datetime.now())
+    month_ago = datetime.datetime.now() - datetime.timedelta(30)
+    end = _get_date(month_ago)
+
+    url = f"{url_base}?access_key={access_key}&start={start}&end={end}&saved_filter_name=IOWFilterRDS"
+    f = urlopen(url)
+    content = f.read()
+    logger.info(content)
 
 
 def control_db_utilization(event, context):
