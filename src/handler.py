@@ -131,6 +131,7 @@ def generate_cloudcheckr_reports(event, context):
     end = _get_date(month_ago)
 
     url = f"{url_base}?access_key={access_key}&start={start}&end={end}&saved_filter_name=IOWFilterRDS"
+    logger.info(url)
     f = urlopen(url)
     content = f.read()
     logger.info(content)
